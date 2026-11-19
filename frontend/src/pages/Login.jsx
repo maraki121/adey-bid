@@ -66,7 +66,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', {
+      const res = await axios.post('https://adey-bid-8k87.onrender.com/api/auth/login', {
         phone,
         password
       });
