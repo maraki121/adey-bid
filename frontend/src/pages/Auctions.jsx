@@ -73,14 +73,14 @@ export default function Auctions() {
 
   const loadAuctions = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/auctions');
+      const res = await axios.get('http://adey-bid-8k87.onrender.com/api/auctions');
       setAuctions(res.data);
     } catch (error) { console.error('Error:', error); }
   };
 
   const loadCategories = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/admin/categories', {
+      const res = await axios.get('http://adey-bid-8k87.onrender.com/api/admin/categories', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setCategories(res.data);
@@ -91,7 +91,7 @@ export default function Auctions() {
     setWinnerLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`http://localhost:5000/api/admin/auctions/${auctionId}/winner`, {
+      const res = await axios.get(`http://adey-bid-8k87.onrender.com/api/admin/auctions/${auctionId}/winner`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setWinnerModal({ ...res.data, auction_title: auctionTitle });
@@ -454,7 +454,7 @@ export default function Auctions() {
                         <motion.img
                           whileHover={!isEnded ? { scale: 1.1 } : {}}
                           transition={{ duration: 0.5 }}
-                          src={`http://localhost:5000${a.image_url}`}
+                          src={`http://adey-bid-8k87.onrender.com${a.image_url}`}
                           className={`w-full h-full object-cover ${isEnded ? 'grayscale' : ''}`}
                           onError={(e) => { e.target.style.display = 'none'; }}
                         />

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const API = 'http://localhost:5000/api';
+const API = 'http://adey-bid-8k87.onrender.com/api';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
