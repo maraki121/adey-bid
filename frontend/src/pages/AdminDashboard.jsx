@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-const API = 'http://adey-bid-8k87.onrender.com/api';
+const API = 'https://adey-bid-8k87.onrender.com/api';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
         headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       const imageUrl = res.data.url || res.data.path || res.data.filename;
-      const fullUrl = imageUrl.startsWith('http') ? imageUrl : `http://adey-bid-8k87.onrender.com${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+      const fullUrl = imageUrl.startsWith('http') ? imageUrl : `https://adey-bid-8k87.onrender.com${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
       setNewAuction({ ...newAuction, image_url: imageUrl });
       setImagePreview(fullUrl);
       setSuccess('✅ Image uploaded successfully!');
@@ -635,7 +635,7 @@ export default function AdminDashboard() {
                   <div key={a.id} className="bg-white/5 rounded-xl p-4 border border-white/10">
                     {a.image_url && (
                       <img
-                        src={a.image_url.startsWith('http') ? a.image_url : `http://adey-bid-8k87.onrender.com${a.image_url.startsWith('/') ? '' : '/'}${a.image_url}`}
+                        src={a.image_url.startsWith('http') ? a.image_url : `https://adey-bid-8k87.onrender.com${a.image_url.startsWith('/') ? '' : '/'}${a.image_url}`}
                         alt={a.title}
                         className="w-full h-40 object-cover rounded-xl mb-3"
                         onError={(e) => { e.target.style.display = 'none'; }}

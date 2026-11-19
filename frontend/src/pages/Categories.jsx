@@ -14,7 +14,7 @@ export default function Categories() {
   const loadCategories = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await axios.get('http://adey-bid-8k87.onrender.com/api/admin/categories', {
+      const res = await axios.get('https://adey-bid-8k87.onrender.com/api/admin/categories', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCategories(res.data);
@@ -27,7 +27,7 @@ export default function Categories() {
     e.preventDefault();
     const token = localStorage.getItem('token');
     try {
-      await axios.post('http://adey-bid-8k87.onrender.com/api/admin/categories', { name }, {
+      await axios.post('https://adey-bid-8k87.onrender.com/api/admin/categories', { name }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setName('');
@@ -42,7 +42,7 @@ export default function Categories() {
     if (!confirm('Delete this category?')) return;
     const token = localStorage.getItem('token');
     try {
-      await axios.delete(`http://adey-bid-8k87.onrender.com/api/admin/categories/${id}`, {
+      await axios.delete(`https://adey-bid-8k87.onrender.com/api/admin/categories/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       loadCategories();

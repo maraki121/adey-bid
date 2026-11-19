@@ -83,7 +83,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const res = await axios.post('http://adey-bid-8k87.onrender.com/api/auth/register', {
+      const res = await axios.post('https://adey-bid-8k87.onrender.com/api/auth/register', {
         phone, password, name
       });
       setSuccess(true);
