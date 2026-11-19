@@ -10,6 +10,7 @@ const paymentRoutes = require('./routes/payment');
 const uploadRoutes = require('./routes/upload'); // ✅ አዲስ የተጨመረ
 
 const app = express();
+app.use(cors());
 
 // Create uploads folder
 const uploadDir = path.join(__dirname, 'uploads');
