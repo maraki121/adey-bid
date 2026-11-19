@@ -15,6 +15,19 @@ export default function BidPage() {
   const [timeLeft, setTimeLeft] = useState(null);
   const [user, setUser] = useState(null);
 
+  const loadAuction = async () => {
+    try {
+      const res = await axios.get(`https://adey-bid-8k87.onrender.com/api/auctions/${id}`);
+      setAuction(res.data.auction);
+      setBids(res.data.bids || []);
+    } catch (error) {
+      console.error('Error:', error);
+      setAuction(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('user'));
     setUser(userData);
@@ -37,15 +50,6 @@ export default function BidPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [auction]);
-
-  const loadAuction = async () => {
-    try {
-      const res = await axios.get(`http://localhost:5000/api/auctions/${id}`);
-      setAuction(res.data.auction);
-      setBids(res.data.bids || []);
-      setLoading(false);
-    } catch (error) { console.error('Error:', error); setLoading(false); }
-  };
 
   const handleBid = async (e) => {
     e.preventDefault();
@@ -215,7 +219,7 @@ export default function BidPage() {
               }`}
             >
               {auction.image_url ? (
-                <img src={`http://localhost:5000${auction.image_url}`} className="w-full h-80 object-cover" />
+                <img src={`https://adey-bid-8k87.onrender.com${auction.image_url}`} className="w-full h-80 object-cover" />
               ) : (
                 <div className="w-full h-80 bg-gradient-to-br from-purple-900/50 to-pink-900/50 flex items-center justify-center text-6xl">📷</div>
               )}

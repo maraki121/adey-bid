@@ -68,7 +68,7 @@ export default function Payment() {
     try {
       const token = localStorage.getItem('token');
       
-      await axios.post('http://localhost:5000/api/payment', {
+      await axios.post('https://adey-bid-8k87.onrender.com/api/payment', {
         amount: parseFloat(amount),
         method,
         transaction_id: transactionId,
