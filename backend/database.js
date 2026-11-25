@@ -1,122 +1,138 @@
-const Database = require('better-sqlite3');
+const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
-const path = require('path');
 
-const db = new Database(path.join(__dirname, 'adey-bid.db'));
+// PostgreSQL Connection Pool (ለ 30,000+ ሰዎች የተሰራ)
+// ✅ Project ID: zhjxlpclomsypeftixkf (l እንጂ d አይደለም!)
+// ✅ Password: Tsion-1811-qpio (i እንጂ l አይደለም!)
+const pool = new Pool({
+  connectionString: 'postgresql://postgres:Tsion-1811-qpio@db.zhjxlpclomsypeftixkf.supabase.co:5432/postgres',
+  ssl: false
+});
 
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+// ዳታቤዝ ሰንጠረዦችን መፍጠር (ካልተፈጠሩ ብቻ)
+const initializeDatabase = async () => {
+  try {
+    // 1. Users table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        phone TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        name TEXT,
+        balance NUMERIC DEFAULT 0,
+        role TEXT DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-// Users table
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    phone TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    name TEXT,
-    balance REAL DEFAULT 0,
-    role TEXT DEFAULT 'user',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`).run();
+    // 2. Categories table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id SERIAL PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-// Categories table
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`).run();
+    // 3. Auctions table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS auctions (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        image_url TEXT,
+        category_id INTEGER REFERENCES categories(id),
+        bid_cost NUMERIC NOT NULL,
+        duration_days INTEGER NOT NULL,
+        end_date TIMESTAMP NOT NULL,
+        status TEXT DEFAULT 'active',
+        winner_id INTEGER REFERENCES users(id),
+        winning_number NUMERIC,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-// Auctions table
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS auctions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    description TEXT,
-    image_url TEXT,
-    category_id INTEGER,
-    bid_cost REAL NOT NULL,
-    duration_days INTEGER NOT NULL,
-    end_date DATETIME NOT NULL,
-    status TEXT DEFAULT 'active',
-    winner_id INTEGER,
-    winning_number INTEGER,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id),
-    FOREIGN KEY (winner_id) REFERENCES users(id)
-  )
-`).run();
+    // 4. Bids table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bids (
+        id SERIAL PRIMARY KEY,
+        auction_id INTEGER REFERENCES auctions(id),
+        user_id INTEGER REFERENCES users(id),
+        number NUMERIC NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-// Bids table
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS bids (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    auction_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
-    number REAL NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (auction_id) REFERENCES auctions(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  )
-`).run();
+    // 5. Payments table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS payments (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        amount NUMERIC NOT NULL,
+        method TEXT NOT NULL,
+        transaction_id TEXT NOT NULL,
+        auction_id INTEGER,
+        bid_number NUMERIC,
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-// Payments table
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS payments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    amount REAL NOT NULL,
-    method TEXT NOT NULL,
-    transaction_id TEXT NOT NULL,
-    auction_id INTEGER,
-    bid_number REAL,
-    status TEXT DEFAULT 'pending',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  )
-`).run();
+    // 6. Password resets table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS password_resets (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        phone TEXT NOT NULL,
+        otp TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        new_password TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-// ✅ FIXED: password_resets table - user_id is NOT NULL
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS password_resets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    phone TEXT NOT NULL,
-    otp TEXT NOT NULL,
-    status TEXT DEFAULT 'pending',
-    new_password TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  )
-`).run();
+    // Indexes (ለፍጥነት)
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_bids_auction ON bids(auction_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_bids_user ON bids(user_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_password_resets_phone ON password_resets(phone)`);
 
-// Indexes
-db.prepare(`CREATE INDEX IF NOT EXISTS idx_bids_auction ON bids(auction_id)`).run();
-db.prepare(`CREATE INDEX IF NOT EXISTS idx_bids_user ON bids(user_id)`).run();
-db.prepare(`CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id)`).run();
-db.prepare(`CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)`).run();
-db.prepare(`CREATE INDEX IF NOT EXISTS idx_password_resets_phone ON password_resets(phone)`).run();
+    // Seed default categories
+    const defaultCategories = ['Electronics', 'Vehicles', 'Fashion', 'Sports', 'Home'];
+    for (const cat of defaultCategories) {
+      await pool.query(
+        `INSERT INTO categories (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
+        [cat]
+      );
+    }
 
-// Seed default categories
-const defaultCategories = ['Electronics', 'Vehicles', 'Fashion', 'Sports', 'Home'];
-const insertCat = db.prepare('INSERT OR IGNORE INTO categories (name) VALUES (?)');
-defaultCategories.forEach(cat => insertCat.run(cat));
+    // Create default admin user
+    const adminCheck = await pool.query('SELECT id FROM users WHERE phone = $1', ['0911111111']);
+    if (adminCheck.rows.length === 0) {
+      const hashedPassword = bcrypt.hashSync('admin123', 10);
+      await pool.query(
+        'INSERT INTO users (phone, password, name, role) VALUES ($1, $2, $3, $4)',
+        ['0911111111', hashedPassword, 'Admin', 'admin']
+      );
+      console.log('✅ Default admin created: 0911111111 / admin123');
+    }
 
-// Create default admin user
-const adminExists = db.prepare('SELECT id FROM users WHERE phone = ?').get('0911111111');
-if (!adminExists) {
-  const hashedPassword = bcrypt.hashSync('admin123', 10);
-  db.prepare('INSERT INTO users (phone, password, name, role) VALUES (?, ?, ?, ?)').run(
-    '0911111111',
-    hashedPassword,
-    'Admin',
-    'admin'
-  );
-  console.log('✅ Default admin created: 0911111111 / admin123');
-}
+    console.log('✅ PostgreSQL Database initialized successfully!');
+  } catch (error) {
+    console.error('❌ Database initialization error:', error);
+  }
+};
 
-console.log('✅ Database initialized successfully');
+// ግንኙነት መሞከር እና ሰንጠረዦችን መፍጠር
+pool.connect((err, client, release) => {
+  if (err) {
+    console.error('❌ PostgreSQL connection error:', err.stack);
+  } else {
+    console.log('✅ Connected to PostgreSQL! Initializing tables...');
+    release();
+    initializeDatabase();
+  }
+});
 
-module.exports = db;
+module.exports = pool;
