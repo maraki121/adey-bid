@@ -1,11 +1,16 @@
+// Force IPv4 to fix ENETUNREACH on Render
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
 // PostgreSQL Connection Pool (ለ 30,000+ ሰዎች የተሰራ)
 // ✅ Project ID: zhjxlpclomsypeftixkf (l እንጂ d አይደለም!)
 // ✅ Password: Tsion-1811-qpio (i እንጂ l አይደለም!)
+// ✅ Render ላይ DATABASE_URL ከ Environment Variables ይጠቀማል
 const pool = new Pool({
-  connectionString: 'postgresql://postgres:Tsion-1811-qpio@db.zhjxlpclomsypeftixkf.supabase.co:5432/postgres',
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:Tsion-1811-qpio@db.zhjxlpclomsypeftixkf.supabase.co:5432/postgres',
   ssl: false
 });
 
